@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sandy Plains Softball Lineup Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #0d5ca9;
+      --primary-light: #1a74cc;
+      --secondary: #4aa8e8;
+      --accent: #f4a261;
+      --accent-dark: #e76f51;
+      --bg: #eef4fb;
+      --card: #ffffff;
+      --border: #c5d7ee;
+      --text: #1a2535;
+      --text-light: #5a718a;
+      --infield-bg: #dbeeff;
+      --selected-bg: #fef9c3;
+      --selected-border: #f59e0b;
+      --error-bg: #fee2e2;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 0.875rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    header .icon { font-size: 1.5rem; }
+    header h1 { font-family: 'Oswald', sans-serif; font-size: 1.4rem; letter-spacing: 0.3px; }
+    header .sub { font-size: 0.8rem; opacity: 0.65; margin-left: 0.5rem; }
+
+    main { max-width: 1300px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+    .card {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      margin-bottom: 1.25rem;
+    }
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 0;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+    label { font-size: 0.8rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.4px; }
+
+    input[type="text"], input[type="date"] {
+      padding: 0.45rem 0.7rem;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      color: var(--text);
+      background: white;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(82,183,136,0.18); }
+
+    .players-list { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.75rem; }
+    .player-row { display: flex; align-items: center; gap: 0.5rem; }
+    .player-num { font-size: 0.8rem; font-weight: 700; color: var(--text-light); width: 22px; text-align: right; flex-shrink: 0; }
+    .player-row .name-inp { flex: 1; min-width: 0; }
+    .player-row .num-inp { width: 68px; flex-shrink: 0; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.45rem 1.1rem;
+      border: none;
+      border-radius: 7px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, opacity 0.15s;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: var(--primary-light); color: white; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary); }
+    .btn-accent { background: var(--accent); color: white; }
+    .btn-accent:hover:not(:disabled) { background: var(--accent-dark); }
+    .btn-outline { background: transparent; color: var(--primary-light); border: 1.5px solid var(--primary-light); }
+    .btn-outline:hover:not(:disabled) { background: var(--primary-light); color: white; }
+    .btn-ghost { background: transparent; color: #ef4444; border: none; padding: 0.25rem 0.4rem; font-size: 1rem; line-height: 1; }
+    .btn-ghost:hover { color: #dc2626; }
+    .btn-lg { padding: 0.65rem 1.75rem; font-size: 1rem; }
+
+    .btn-row { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+
+    .divider { height: 1px; background: var(--border); margin: 1rem 0; }
+
+    /* Results layout */
+    #results { display: none; }
+    .results-layout { display: grid; grid-template-columns: 260px 1fr; gap: 1.25rem; align-items: start; }
+    @media (max-width: 800px) { .results-layout { grid-template-columns: 1fr; } }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th {
+      background: var(--primary);
+      color: white;
+      padding: 0.45rem 0.7rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.78rem;
+      white-space: nowrap;
+      letter-spacing: 0.2px;
+    }
+    td { padding: 0.38rem 0.7rem; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    td.pos-label { font-weight: 600; font-size: 0.8rem; color: var(--primary); }
+    td.clickable { cursor: pointer; user-select: none; }
+    td.clickable:hover { background: #d6eaf8 !important; }
+    td.selected { background: var(--selected-bg) !important; outline: 2px solid var(--selected-border); outline-offset: -2px; }
+    tr.batting-selected td { background: var(--selected-bg) !important; outline: none; }
+
+    .order-num { color: var(--text-light); font-weight: 700; font-size: 0.8rem; width: 30px; }
+
+    /* Fielding scroll */
+    .fielding-scroll { overflow-x: auto; }
+
+    /* Infield indicator in position column */
+    .infield-dot { display: inline-block; width: 7px; height: 7px; background: #4aa8e8; border-radius: 50%; margin-left: 5px; vertical-align: middle; }
+
+    /* Legend */
+    .legend { display: flex; gap: 1rem; font-size: 0.78rem; color: var(--text-light); margin-bottom: 0.6rem; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 0.3rem; }
+    .legend-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; }
+
+    /* Hint text */
+    .hint { font-size: 0.78rem; color: var(--text-light); margin-bottom: 0.6rem; }
+
+    /* Error box */
+    .error-box {
+      background: var(--error-bg);
+      border: 1.5px solid #fca5a5;
+      border-radius: 8px;
+      padding: 0.875rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .error-box h3 { color: #b91c1c; font-size: 0.875rem; margin-bottom: 0.4rem; }
+    .error-list { list-style: none; display: flex; flex-direction: column; gap: 0.25rem; }
+    .error-list li { font-size: 0.82rem; color: #dc2626; padding-left: 1rem; position: relative; }
+    .error-list li::before { content: '▸'; position: absolute; left: 0; }
+
+    /* Player count badge */
+    .count-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      background: var(--secondary);
+      color: white;
+      border-radius: 11px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    /* ── Tabs ── */
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1rem;
+    }
+    .tab-btn {
+      padding: 0.45rem 1rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: inherit;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      color: var(--text-light);
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab-btn:hover { color: var(--primary-light); }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Paste textarea */
+    .paste-area {
+      width: 100%;
+      min-height: 180px;
+      padding: 0.6rem 0.75rem;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-family: 'Inter', monospace, sans-serif;
+      color: var(--text);
+      background: white;
+      resize: vertical;
+      line-height: 1.6;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .paste-area:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(82,183,136,0.18); }
+    .paste-format-hint {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      margin-top: 0.4rem;
+      line-height: 1.5;
+    }
+    .paste-format-hint code {
+      background: #f3f4f6;
+      padding: 0 4px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 0.75rem;
+    }
+
+    /* ── Print styles ── */
+    @media print {
+      @page { size: letter portrait; margin: 0.45in; }
+
+      body { background: white; }
+      header, .no-print { display: none !important; }
+      main { padding: 0; max-width: none; }
+
+      .print-header {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 0.4in;
+      }
+      .print-header h2 { font-size: 15pt; font-weight: 700; color: #000; }
+      .print-header p { font-size: 10pt; color: #444; margin-top: 2pt; }
+
+      .card { box-shadow: none; padding: 0; border-radius: 0; margin-bottom: 0; }
+      .card h2 { font-size: 9pt; margin-bottom: 4pt; padding-bottom: 3pt; }
+
+      .results-layout {
+        display: grid;
+        grid-template-columns: 1.6in 1fr;
+        gap: 0.2in;
+        align-items: start;
+      }
+
+      table { font-size: 7.5pt; }
+      th { padding: 3pt 5pt; font-size: 7pt; }
+      td { padding: 2.5pt 5pt; }
+
+      .legend, .hint, #errorBox { display: none !important; }
+      td.clickable { cursor: default; }
+      .infield-dot { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+      #results { display: block !important; }
+    }
+
+    .print-header { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="icon">⚾</div>
+  <h1>Sandy Plains Softball Lineup Generator</h1>
+</header>
+
+<main>
+
+  <!-- ── Input Section ── -->
+  <div id="inputSection">
+
+    <div class="card no-print">
+      <h2>Game Info</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="gameDate">Game Date</label>
+          <input type="date" id="gameDate">
+        </div>
+        <div class="form-group">
+          <label for="teamName">Your Team Name</label>
+          <input type="text" id="teamName" placeholder="e.g., Fire Ants">
+        </div>
+        <div class="form-group">
+          <label for="opponentName">Opponent Team Name</label>
+          <input type="text" id="opponentName" placeholder="e.g., Blue Jays">
+        </div>
+      </div>
+    </div>
+
+    <div class="card no-print">
+      <h2>
+        Players
+        <span class="count-badge" id="playerCountBadge">0</span>
+        <span style="font-size:0.75rem;font-weight:400;color:var(--text-light);margin-left:4px">(6–11)</span>
+      </h2>
+
+      <!-- Tab bar -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tabBtnPaste" onclick="switchTab('paste')">Paste Roster</button>
+        <button class="tab-btn" id="tabBtnOne" onclick="switchTab('one')">One by One</button>
+      </div>
+
+      <!-- Tab: individual rows -->
+      <div class="tab-panel" id="tabPanelOne">
+        <div style="display:grid;grid-template-columns:1fr 80px 32px;gap:0.5rem;margin-bottom:0.4rem;padding:0 0 0 28px">
+          <span style="font-size:0.75rem;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px">Name</span>
+          <span style="font-size:0.75rem;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px">Jersey #</span>
+          <span></span>
+        </div>
+        <div class="players-list" id="playersList"></div>
+        <div class="btn-row" style="margin-top:0.75rem">
+          <button class="btn btn-outline" style="font-size:0.82rem;padding:0.35rem 0.85rem" onclick="addPlayerRow()">+ Add Player</button>
+        </div>
+      </div>
+
+      <!-- Tab: paste roster -->
+      <div class="tab-panel active" id="tabPanelPaste">
+        <textarea class="paste-area" id="pasteArea" placeholder="Paste your roster here, one player per line…"></textarea>
+        <p class="paste-format-hint">
+          Each line = one player. Jersey number is optional. Accepted formats:<br>
+          <code>Jane Smith, 12</code> &nbsp;·&nbsp; <code>Jane Smith 12</code> &nbsp;·&nbsp; <code>Jane Smith #12</code> &nbsp;·&nbsp; <code>12 Jane Smith</code>
+        </p>
+        <div class="btn-row" style="margin-top:0.75rem">
+          <button class="btn btn-primary" style="font-size:0.82rem" onclick="importFromPaste()">Import Players</button>
+          <button class="btn btn-ghost" style="color:var(--text-light);border:1.5px solid var(--border);border-radius:7px;padding:0.3rem 0.75rem;font-size:0.82rem" onclick="clearPaste()">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row no-print">
+      <button class="btn btn-accent btn-lg" onclick="generateLineup()">Generate Lineup</button>
+      <button class="btn btn-outline" onclick="resetPage()">Reset</button>
+    </div>
+
+  </div>
+
+  <!-- ── Results Section ── -->
+  <div id="results">
+
+    <!-- Print-only header -->
+    <div class="print-header">
+      <h2 id="printTitle"></h2>
+      <p id="printDate"></p>
+    </div>
+
+    <!-- Errors -->
+    <div id="errorBox" class="error-box" style="display:none">
+      <h3>⚠ Rule Violations — Fix before printing</h3>
+      <ul class="error-list" id="errorList"></ul>
+    </div>
+
+    <div class="results-layout">
+
+      <!-- Batting Lineup -->
+      <div>
+        <div class="card">
+          <h2>Batting Lineup</h2>
+          <p class="hint no-print">Click any two rows to swap players</p>
+          <table id="battingTable">
+            <thead>
+              <tr>
+                <th style="width:32px">#</th>
+                <th>Player</th>
+                <th style="width:52px">Jersey</th>
+              </tr>
+            </thead>
+            <tbody id="battingBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Fielding Grid -->
+      <div>
+        <div class="card">
+          <h2>Fielding Rotation</h2>
+          <div class="no-print">
+            <div class="legend">
+              <div class="legend-item">
+                <span class="infield-dot" style="flex-shrink:0"></span>
+                <span>Infield position</span>
+              </div>
+            </div>
+            <p class="hint">Click any two cells to swap players</p>
+          </div>
+          <div class="fielding-scroll">
+            <table id="fieldingTable">
+              <thead id="fieldingHead"></thead>
+              <tbody id="fieldingBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="btn-row no-print" style="margin-top:0.5rem">
+      <button class="btn btn-primary" onclick="doRegenerate()">↺ Regenerate</button>
+      <!-- REVERT: change onclick back to doPrint() and remove the two CDN script tags above <script> -->
+      <button class="btn btn-outline" id="printBtn" onclick="doPrintPDF()">🖨 Print / Save PDF</button>
+      <button class="btn btn-outline" onclick="goBack()">← Back to Input</button>
+      <button class="btn btn-outline" onclick="resetPage()">Reset</button>
+    </div>
+
+  </div>
+
+</main>
+
+<!-- jsPDF + AutoTable for PDF export. To revert to browser print, remove these two lines and see doPrint() note in JS. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+
+const POSITIONS_BY_COUNT = {
+  11: ['Catcher','Pitcher','1st Base','2nd Base','3rd Base','Short Stop','Short Field','Left Field','Left Center Field','Right Center Field','Right Field'],
+  10: ['Catcher','Pitcher','1st Base','2nd Base','3rd Base','Short Stop','Short Field','Left Field','Center Field','Right Field'],
+   9: ['Catcher','Pitcher','1st Base','2nd Base','3rd Base','Short Stop','Short Field','Left Field','Right Field'],
+   8: ['Catcher','Pitcher','1st Base','2nd Base','3rd Base','Short Stop','Short Field','Outfield'],
+   7: ['Catcher','Pitcher','1st Base','2nd Base','3rd Base','Short Stop','Short Field'],
+   6: ['Catcher','Pitcher','1st Base','2nd Base','3rd Base','Short Stop']
+};
+
+const INFIELD_SET = new Set(['Pitcher','1st Base','2nd Base','3rd Base','Short Stop','Short Field']);
+
+// ── State ──────────────────────────────────────────────────────────────────
+
+let players      = [];   // [{name, number}]
+let battingOrder = [];   // array of player indices (batting position order)
+let fieldingGrid = [];   // [inning 0..4][positionIndex] = playerIndex
+let positions    = [];   // position name strings for current player count
+let selectedCell = null; // {type:'batting', row} | {type:'fielding', inning, pos}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+
+window.addEventListener('load', () => {
+  for (let i = 0; i < 11; i++) addPlayerRow();
+  updateCountBadge();
+});
+
+// ── Player Row Management ──────────────────────────────────────────────────
+
+function addPlayerRow() {
+  const list = document.getElementById('playersList');
+  if (list.querySelectorAll('.player-row').length >= 11) return;
+
+  const row = document.createElement('div');
+  row.className = 'player-row';
+  row.innerHTML = `
+    <span class="player-num">0</span>
+    <input type="text" class="name-inp" placeholder="Player name" oninput="updateCountBadge()">
+    <input type="text" class="num-inp" placeholder="#" maxlength="3">
+    <button class="btn btn-ghost" onclick="removePlayerRow(this)" title="Remove player">×</button>
+  `;
+  list.appendChild(row);
+  renumberRows();
+  updateCountBadge();
+}
+
+function removePlayerRow(btn) {
+  const list = document.getElementById('playersList');
+  if (list.querySelectorAll('.player-row').length <= 1) return;
+  btn.closest('.player-row').remove();
+  renumberRows();
+  updateCountBadge();
+}
+
+function renumberRows() {
+  document.querySelectorAll('#playersList .player-row').forEach((row, i) => {
+    row.querySelector('.player-num').textContent = i + 1;
+  });
+}
+
+function updateCountBadge() {
+  const count = countFilledPlayers();
+  const badge = document.getElementById('playerCountBadge');
+  badge.textContent = count;
+  badge.style.background = (count >= 6 && count <= 11) ? '#1a74cc' : '#ef4444';
+}
+
+function countFilledPlayers() {
+  let n = 0;
+  document.querySelectorAll('#playersList .player-row').forEach(row => {
+    if (row.querySelector('.name-inp').value.trim()) n++;
+  });
+  return n;
+}
+
+function getPlayersFromForm() {
+  const result = [];
+  document.querySelectorAll('#playersList .player-row').forEach(row => {
+    const name = row.querySelector('.name-inp').value.trim();
+    const jersey = row.querySelector('.num-inp').value.trim();
+    if (name) result.push({ name, number: jersey || '?' });
+  });
+  return result;
+}
+
+// ── Tab Switching ──────────────────────────────────────────────────────────
+
+function switchTab(tab) {
+  document.getElementById('tabBtnOne').classList.toggle('active', tab === 'one');
+  document.getElementById('tabBtnPaste').classList.toggle('active', tab === 'paste');
+  document.getElementById('tabPanelOne').classList.toggle('active', tab === 'one');
+  document.getElementById('tabPanelPaste').classList.toggle('active', tab === 'paste');
+}
+
+// ── Paste Import ───────────────────────────────────────────────────────────
+
+function parsePasteLine(line) {
+  line = line.trim();
+  if (!line) return null;
+
+  // "Name, #Number" or "Name, Number"
+  let m = line.match(/^(.+?),\s*#?(\w+)\s*$/);
+  if (m) return { name: m[1].trim(), number: m[2] };
+
+  // "#Number Name" or "Number Name" (number first)
+  m = line.match(/^#?(\d+)\s+(.+)$/);
+  if (m) return { name: m[2].trim(), number: m[1] };
+
+  // "Name #Number" or "Name Number" (number last, preceded by space)
+  m = line.match(/^(.+?)\s+#?(\d+)\s*$/);
+  if (m) return { name: m[1].trim(), number: m[2] };
+
+  // Just a name, no number
+  return { name: line, number: '?' };
+}
+
+function importFromPaste() {
+  const raw = document.getElementById('pasteArea').value;
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+
+  if (!lines.length) {
+    alert('Nothing to import — paste your roster first.');
+    return;
+  }
+
+  const parsed = lines.map(parsePasteLine).filter(Boolean).slice(0, 11);
+
+  if (parsed.length < 1) {
+    alert('Could not find any player names. Check your formatting and try again.');
+    return;
+  }
+
+  // Clear and repopulate the individual rows
+  const list = document.getElementById('playersList');
+  list.innerHTML = '';
+  // Ensure we have the right number of empty rows first (addPlayerRow enforces cap)
+  parsed.forEach(p => {
+    // Directly create rows since addPlayerRow checks max
+    const row = document.createElement('div');
+    row.className = 'player-row';
+    row.innerHTML = `
+      <span class="player-num">0</span>
+      <input type="text" class="name-inp" placeholder="Player name" oninput="updateCountBadge()" value="${escHtml(p.name)}">
+      <input type="text" class="num-inp" placeholder="#" maxlength="3" value="${escHtml(p.number === '?' ? '' : p.number)}">
+      <button class="btn btn-ghost" onclick="removePlayerRow(this)" title="Remove player">×</button>
+    `;
+    list.appendChild(row);
+  });
+  renumberRows();
+  updateCountBadge();
+
+  // Switch to the "One by One" tab so the coach can review/edit
+  switchTab('one');
+}
+
+function clearPaste() {
+  document.getElementById('pasteArea').value = '';
+}
+
+// ── Utilities ──────────────────────────────────────────────────────────────
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ── Fielding Grid Generation ────────────────────────────────────────────────
+//
+// Build a 5×N Latin rectangle: grid[inning][posIdx] = playerIdx
+//   Rule A: each row (inning) is a permutation of players 0..N-1
+//   Rule B: no column (player) has the same posIdx appear more than once
+//   Rule C: each player appears at an infield posIdx at least twice
+//
+// Strategy: for each inning, use backtracking to assign one player per
+// position without repeating a player-position pair.  Outer loop retries
+// until the infield constraint is also satisfied (usually within a few tries).
+
+function buildInningAssignment(posIdx, available, assignment, usedPos) {
+  // usedPos[playerIdx] = Set of positionIndices already used across prior innings
+  if (posIdx === assignment.length) return true;
+  const candidates = shuffle(available);
+  for (const p of candidates) {
+    if (!usedPos[p].has(posIdx)) {
+      assignment[posIdx] = p;
+      const remaining = available.filter(x => x !== p);
+      if (buildInningAssignment(posIdx + 1, remaining, assignment, usedPos)) return true;
+    }
+  }
+  return false;
+}
+
+function generateFieldingGrid(N, posNames) {
+  const infieldIdx = posNames.reduce((acc, p, i) => { if (INFIELD_SET.has(p)) acc.push(i); return acc; }, []);
+  const allPlayers = Array.from({length: N}, (_, i) => i);
+
+  for (let attempt = 0; attempt < 800; attempt++) {
+    const grid = [];
+    const usedPos = Array.from({length: N}, () => new Set());
+    let ok = true;
+
+    for (let inning = 0; inning < 5; inning++) {
+      const assignment = new Array(N).fill(-1);
+      if (!buildInningAssignment(0, allPlayers, assignment, usedPos)) { ok = false; break; }
+      grid.push(assignment);
+      for (let j = 0; j < N; j++) usedPos[assignment[j]].add(j);
+    }
+
+    if (!ok) continue;
+
+    // Check Rule C: each player ≥ 2 infield starts
+    let infieldOk = true;
+    for (let p = 0; p < N && infieldOk; p++) {
+      let cnt = 0;
+      for (let i = 0; i < 5; i++) {
+        for (const j of infieldIdx) {
+          if (grid[i][j] === p) { cnt++; break; }
+        }
+      }
+      if (cnt < 2) infieldOk = false;
+    }
+
+    if (infieldOk) return grid;
+  }
+
+  // Absolute fallback: cyclic shift (valid Latin rectangle, infield may not be optimal)
+  const grid = [];
+  for (let i = 0; i < 5; i++) {
+    grid.push(allPlayers.map((_, j) => (j + i) % N));
+  }
+  return grid;
+}
+
+// ── Validation ─────────────────────────────────────────────────────────────
+
+function validateRules() {
+  const N = players.length;
+  const errors = [];
+  if (!fieldingGrid.length || !N) return errors;
+
+  const infieldIdx = new Set(positions.reduce((acc, p, i) => { if (INFIELD_SET.has(p)) acc.push(i); return acc; }, []));
+
+  // Rule 1: no player at multiple positions in same inning
+  for (let i = 0; i < 5; i++) {
+    const seen = new Map(); // playerIdx → posIdx
+    for (let j = 0; j < N; j++) {
+      const p = fieldingGrid[i][j];
+      if (seen.has(p)) {
+        errors.push(`Rule 1: ${players[p].name} appears in multiple positions in Inning ${i + 1}.`);
+      } else {
+        seen.set(p, j);
+      }
+    }
+  }
+
+  // Rule 2: no player in same position more than once across innings
+  for (let p = 0; p < N; p++) {
+    const posPlayed = new Map(); // posIdx → first inning seen
+    for (let i = 0; i < 5; i++) {
+      for (let j = 0; j < N; j++) {
+        if (fieldingGrid[i][j] === p) {
+          if (posPlayed.has(j)) {
+            errors.push(`Rule 2: ${players[p].name} plays ${positions[j]} in both Inning ${posPlayed.get(j) + 1} and Inning ${i + 1}.`);
+          } else {
+            posPlayed.set(j, i);
+          }
+        }
+      }
+    }
+  }
+
+  // Rule 4: each player must play infield ≥ 2 times (Rule 3 in spec)
+  for (let p = 0; p < N; p++) {
+    let cnt = 0;
+    for (let i = 0; i < 5; i++) {
+      for (let j = 0; j < N; j++) {
+        if (fieldingGrid[i][j] === p && infieldIdx.has(j)) { cnt++; break; }
+      }
+    }
+    if (cnt < 2) {
+      errors.push(`Rule 3: ${players[p].name} only plays infield ${cnt} time${cnt === 1 ? '' : 's'} — minimum 2 required.`);
+    }
+  }
+
+  return errors;
+}
+
+// ── Generate ────────────────────────────────────────────────────────────────
+
+function generateLineup() {
+  const raw = getPlayersFromForm();
+  if (raw.length < 6 || raw.length > 11) {
+    alert(`Please enter between 6 and 11 players.\nCurrently you have ${raw.length} player${raw.length === 1 ? '' : 's'} with names filled in.`);
+    return;
+  }
+
+  players = raw;
+  const N = players.length;
+  positions = POSITIONS_BY_COUNT[N];
+
+  battingOrder = shuffle(Array.from({length: N}, (_, i) => i));
+  fieldingGrid = generateFieldingGrid(N, positions);
+
+  selectedCell = null;
+  document.getElementById('inputSection').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+  renderResults();
+}
+
+function doRegenerate() {
+  const N = players.length;
+  battingOrder = shuffle(Array.from({length: N}, (_, i) => i));
+  fieldingGrid = generateFieldingGrid(N, positions);
+  selectedCell = null;
+  renderResults();
+}
+
+function goBack() {
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('inputSection').style.display = 'block';
+}
+
+function resetPage() {
+  if (!confirm('Reset and start over?')) return;
+  players = []; battingOrder = []; fieldingGrid = []; positions = []; selectedCell = null;
+  document.getElementById('gameDate').value = '';
+  document.getElementById('teamName').value = '';
+  document.getElementById('opponentName').value = '';
+  document.getElementById('playersList').innerHTML = '';
+  for (let i = 0; i < 11; i++) addPlayerRow();
+  updateCountBadge();
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('inputSection').style.display = 'block';
+}
+
+// ── Render ──────────────────────────────────────────────────────────────────
+
+function renderResults() {
+  const dateVal = document.getElementById('gameDate').value;
+  const team = document.getElementById('teamName').value.trim() || 'Your Team';
+  const opp  = document.getElementById('opponentName').value.trim() || 'Opponent';
+
+  document.getElementById('printTitle').textContent = `${team}  vs  ${opp}`;
+  if (dateVal) {
+    const d = new Date(dateVal + 'T12:00:00');
+    document.getElementById('printDate').textContent = d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  } else {
+    document.getElementById('printDate').textContent = '';
+  }
+
+  renderBattingTable();
+  renderFieldingGrid();
+  showErrors();
+}
+
+function renderBattingTable() {
+  const tbody = document.getElementById('battingBody');
+  tbody.innerHTML = '';
+  battingOrder.forEach((pIdx, orderPos) => {
+    const p = players[pIdx];
+    const tr = document.createElement('tr');
+    tr.dataset.orderPos = orderPos;
+    const cols = `
+      <td class="order-num clickable" onclick="handleBattingClick(${orderPos})">${orderPos + 1}</td>
+      <td class="clickable" onclick="handleBattingClick(${orderPos})">${escHtml(p.name)}</td>
+      <td class="clickable" style="color:var(--text-light)" onclick="handleBattingClick(${orderPos})">${escHtml(p.number)}</td>
+    `;
+    tr.innerHTML = cols;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderFieldingGrid() {
+  const N = players.length;
+  const head = document.getElementById('fieldingHead');
+  const body = document.getElementById('fieldingBody');
+
+  head.innerHTML = `<tr>
+    <th>Position</th>
+    ${[1,2,3,4,5].map(i => `<th style="text-align:center">Inning ${i}</th>`).join('')}
+  </tr>`;
+
+  body.innerHTML = '';
+
+  positions.forEach((pos, posIdx) => {
+    const isInfield = INFIELD_SET.has(pos);
+    const tr = document.createElement('tr');
+    let html = `<td class="pos-label ${isInfield ? 'infield' : ''}">${escHtml(pos)}${isInfield ? '<span class="infield-dot"></span>' : ''}</td>`;
+    for (let inn = 0; inn < 5; inn++) {
+      const pIdx = fieldingGrid[inn][posIdx];
+      const name = players[pIdx].name;
+      html += `<td class="clickable ${isInfield ? 'infield-cell' : ''}"
+                   style="text-align:center"
+                   onclick="handleFieldingClick(${inn},${posIdx})"
+                   data-inn="${inn}" data-pos="${posIdx}">${escHtml(name)}</td>`;
+    }
+    tr.innerHTML = html;
+    body.appendChild(tr);
+  });
+}
+
+function showErrors() {
+  const errs = validateRules();
+  const box  = document.getElementById('errorBox');
+  const list = document.getElementById('errorList');
+  const btn  = document.getElementById('printBtn');
+
+  if (errs.length) {
+    box.style.display = 'block';
+    list.innerHTML = errs.map(e => `<li>${escHtml(e)}</li>`).join('');
+    btn.disabled = true;
+    btn.title = 'Fix rule violations before printing';
+  } else {
+    box.style.display = 'none';
+    btn.disabled = false;
+    btn.title = '';
+  }
+}
+
+// ── Swap Interactions ────────────────────────────────────────────────────────
+
+function handleBattingClick(orderPos) {
+  if (!selectedCell) {
+    selectedCell = { type: 'batting', row: orderPos };
+    setBattingHighlight(orderPos, true);
+  } else if (selectedCell.type === 'batting') {
+    if (selectedCell.row === orderPos) {
+      setBattingHighlight(orderPos, false);
+      selectedCell = null;
+    } else {
+      const a = selectedCell.row, b = orderPos;
+      [battingOrder[a], battingOrder[b]] = [battingOrder[b], battingOrder[a]];
+      selectedCell = null;
+      renderBattingTable();
+    }
+  } else {
+    clearHighlights();
+    selectedCell = { type: 'batting', row: orderPos };
+    setBattingHighlight(orderPos, true);
+  }
+}
+
+function setBattingHighlight(orderPos, on) {
+  const rows = document.querySelectorAll('#battingBody tr');
+  if (rows[orderPos]) {
+    rows[orderPos].querySelectorAll('td').forEach(td => td.classList.toggle('selected', on));
+  }
+}
+
+function handleFieldingClick(inn, pos) {
+  if (!selectedCell) {
+    selectedCell = { type: 'fielding', inn, pos };
+    setFieldingHighlight(inn, pos, true);
+  } else if (selectedCell.type === 'fielding') {
+    if (selectedCell.inn === inn && selectedCell.pos === pos) {
+      setFieldingHighlight(inn, pos, false);
+      selectedCell = null;
+    } else {
+      const { inn: i1, pos: p1 } = selectedCell;
+      [fieldingGrid[i1][p1], fieldingGrid[inn][pos]] = [fieldingGrid[inn][pos], fieldingGrid[i1][p1]];
+      selectedCell = null;
+      renderResults();
+    }
+  } else {
+    clearHighlights();
+    selectedCell = { type: 'fielding', inn, pos };
+    setFieldingHighlight(inn, pos, true);
+  }
+}
+
+function setFieldingHighlight(inn, pos, on) {
+  const cell = document.querySelector(`#fieldingBody td[data-inn="${inn}"][data-pos="${pos}"]`);
+  if (cell) cell.classList.toggle('selected', on);
+}
+
+function clearHighlights() {
+  document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+}
+
+// ── Print ────────────────────────────────────────────────────────────────────
+// Browser print fallback — kept intact for easy revert.
+// To revert: change button onclick back to doPrint(), remove the two CDN <script> tags.
+
+function doPrint() {
+  const errs = validateRules();
+  if (errs.length) { alert('Cannot print — there are rule violations. Please fix them first.'); return; }
+  window.print();
+}
+
+// ── PDF Export (jsPDF + autoTable) ───────────────────────────────────────────
+
+function doPrintPDF() {
+  const errs = validateRules();
+  if (errs.length) { alert('Cannot export PDF — there are rule violations. Please fix them first.'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'letter' });
+
+  const PAGE_W  = 612;
+  const MARGIN  = 36;
+  const USABLE  = PAGE_W - MARGIN * 2;   // 540pt
+  const PRIMARY = [13, 92, 169];
+  const MUTED   = [90, 113, 138];
+  const TEXT    = [26, 37, 53];
+
+  // ── Header ──────────────────────────────────────────────────────────────
+  const team    = document.getElementById('teamName').value.trim()     || 'Your Team';
+  const opp     = document.getElementById('opponentName').value.trim() || 'Opponent';
+  const dateVal = document.getElementById('gameDate').value;
+  let dateStr = '';
+  if (dateVal) {
+    const d = new Date(dateVal + 'T12:00:00');
+    dateStr = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  let y = MARGIN + 12;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(...PRIMARY);
+  doc.text(`${team}  vs  ${opp}`, PAGE_W / 2, y, { align: 'center' });
+  y += 16;
+
+  if (dateStr) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(...MUTED);
+    doc.text(dateStr, PAGE_W / 2, y, { align: 'center' });
+    y += 14;
+  }
+
+  y += 7;
+  doc.setDrawColor(...PRIMARY);
+  doc.setLineWidth(0.75);
+  doc.line(MARGIN, y, PAGE_W - MARGIN, y);
+  y += 10;
+
+  const TABLE_Y = y;
+
+  const cellStyle = { fontSize: 8, cellPadding: { top: 3, bottom: 3, left: 4, right: 4 }, overflow: 'ellipsize', textColor: TEXT };
+  const headStyle = { fillColor: PRIMARY, textColor: 255, fontStyle: 'bold', fontSize: 7.5, halign: 'center' };
+  const altStyle  = { fillColor: [250, 250, 250] };
+
+  // ── Fielding Grid (full width) ───────────────────────────────────────────
+  const POS_COL_W  = 85;
+  const INN_COL_W  = Math.floor((USABLE - POS_COL_W) / 5);  // ~91pt each
+
+  const fieldBody = positions.map((pos, posIdx) => {
+    const label = pos;
+    const row = [label];
+    for (let inn = 0; inn < 5; inn++) row.push(players[fieldingGrid[inn][posIdx]].name);
+    return row;
+  });
+
+  doc.autoTable({
+    head: [['Position', 'Inning 1', 'Inning 2', 'Inning 3', 'Inning 4', 'Inning 5']],
+    body: fieldBody,
+    startY: TABLE_Y,
+    margin: { left: MARGIN },
+    tableWidth: USABLE,
+    styles: cellStyle,
+    headStyles: headStyle,
+    alternateRowStyles: altStyle,
+    columnStyles: {
+      0: { cellWidth: POS_COL_W, fontStyle: 'bold', textColor: PRIMARY },
+      1: { cellWidth: INN_COL_W, halign: 'center' },
+      2: { cellWidth: INN_COL_W, halign: 'center' },
+      3: { cellWidth: INN_COL_W, halign: 'center' },
+      4: { cellWidth: INN_COL_W, halign: 'center' },
+      5: { cellWidth: INN_COL_W, halign: 'center' }
+    }
+  });
+  const fieldFinalY = doc.lastAutoTable.finalY;
+
+  // ── Batting Lineup (centered, below fielding) ────────────────────────────
+  const BAT_W   = 260;
+  const BAT_X   = Math.round((PAGE_W - BAT_W) / 2);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...PRIMARY);
+  doc.text('Batting Lineup', PAGE_W / 2, fieldFinalY + 18, { align: 'center' });
+
+  const BAT_Y   = fieldFinalY + 24;
+  const batBody = battingOrder.map((pIdx, i) => [
+    String(i + 1),
+    players[pIdx].name,
+    players[pIdx].number || '—'
+  ]);
+
+  doc.autoTable({
+    head: [['#', 'Player', 'Jersey']],
+    body: batBody,
+    startY: BAT_Y,
+    margin: { left: BAT_X },
+    tableWidth: BAT_W,
+    styles: cellStyle,
+    headStyles: headStyle,
+    alternateRowStyles: altStyle,
+    columnStyles: {
+      0: { cellWidth: 25, halign: 'center', fontStyle: 'bold', textColor: MUTED },
+      1: { cellWidth: 190 },
+      2: { cellWidth: 45, halign: 'center', textColor: MUTED }
+    }
+  });
+  const batFinalY = doc.lastAutoTable.finalY;
+
+  // ── Open in new tab ───────────────────────────────────────────────────────
+  // To revert to direct download instead, replace the two lines below with:
+  //   const safe = s => s.replace(/[^a-z0-9]/gi,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
+  //   doc.save(`${safe(team)}_vs_${safe(opp)}_lineup.pdf`);
+  const blob = doc.output('blob');
+  window.open(URL.createObjectURL(blob), '_blank');
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
