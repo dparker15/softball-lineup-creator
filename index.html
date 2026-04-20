@@ -310,12 +310,16 @@
           <input type="date" id="gameDate">
         </div>
         <div class="form-group">
-          <label for="teamName">Your Team Name</label>
+          <label for="teamName">Home Team</label>
           <input type="text" id="teamName" placeholder="e.g., Fire Ants">
         </div>
         <div class="form-group">
-          <label for="opponentName">Opponent Team Name</label>
+          <label for="opponentName">Away Team</label>
           <input type="text" id="opponentName" placeholder="e.g., Blue Jays">
+        </div>
+        <div class="form-group">
+          <label for="fieldName">Field</label>
+          <input type="text" id="fieldName" placeholder="e.g., Sandy Plains Field 3">
         </div>
       </div>
     </div>
@@ -374,6 +378,7 @@
     <div class="print-header">
       <h2 id="printTitle"></h2>
       <p id="printDate"></p>
+      <p id="printField" style="font-size:9pt;color:#666;margin-top:2pt"></p>
     </div>
 
     <!-- Errors -->
@@ -446,12 +451,12 @@
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const POSITIONS_BY_COUNT = {
-  11: ['Catcher','Pitcher','1st Base','2nd Base','3rd Base','Short Stop','Short Field','Left Field','Left Center Field','Right Center Field','Right Field'],
-  10: ['Catcher','Pitcher','1st Base','2nd Base','3rd Base','Short Stop','Short Field','Left Field','Center Field','Right Field'],
-   9: ['Catcher','Pitcher','1st Base','2nd Base','3rd Base','Short Stop','Short Field','Left Field','Right Field'],
-   8: ['Catcher','Pitcher','1st Base','2nd Base','3rd Base','Short Stop','Short Field','Outfield'],
-   7: ['Catcher','Pitcher','1st Base','2nd Base','3rd Base','Short Stop','Short Field'],
-   6: ['Catcher','Pitcher','1st Base','2nd Base','3rd Base','Short Stop']
+  11: ['Pitcher','Catcher','1st Base','2nd Base','Short Stop','3rd Base','Short Field','Left Field','Left Center Field','Right Center Field','Right Field'],
+  10: ['Pitcher','Catcher','1st Base','2nd Base','Short Stop','3rd Base','Short Field','Left Field','Center Field','Right Field'],
+   9: ['Pitcher','Catcher','1st Base','2nd Base','Short Stop','3rd Base','Short Field','Left Field','Right Field'],
+   8: ['Pitcher','Catcher','1st Base','2nd Base','Short Stop','3rd Base','Short Field','Outfield'],
+   7: ['Pitcher','Catcher','1st Base','2nd Base','Short Stop','3rd Base','Short Field'],
+   6: ['Pitcher','Catcher','1st Base','2nd Base','Short Stop','3rd Base']
 };
 
 const INFIELD_SET = new Set(['Pitcher','1st Base','2nd Base','3rd Base','Short Stop','Short Field']);
@@ -775,6 +780,7 @@ function resetPage() {
   document.getElementById('gameDate').value = '';
   document.getElementById('teamName').value = '';
   document.getElementById('opponentName').value = '';
+  document.getElementById('fieldName').value = '';
   document.getElementById('playersList').innerHTML = '';
   for (let i = 0; i < 11; i++) addPlayerRow();
   updateCountBadge();
@@ -786,9 +792,10 @@ function resetPage() {
 
 function renderResults() {
   const dateVal = document.getElementById('gameDate').value;
-  const team = document.getElementById('teamName').value.trim() || 'Your Team';
-  const opp  = document.getElementById('opponentName').value.trim() || 'Opponent';
+  const team = document.getElementById('teamName').value.trim() || 'Home Team';
+  const opp  = document.getElementById('opponentName').value.trim() || 'Away Team';
 
+  const fieldName = document.getElementById('fieldName').value.trim();
   document.getElementById('printTitle').textContent = `${team}  vs  ${opp}`;
   if (dateVal) {
     const d = new Date(dateVal + 'T12:00:00');
@@ -796,6 +803,7 @@ function renderResults() {
   } else {
     document.getElementById('printDate').textContent = '';
   }
+  document.getElementById('printField').textContent = fieldName;
 
   renderBattingTable();
   renderFieldingGrid();
@@ -953,9 +961,10 @@ function doPrintPDF() {
   const TEXT    = [26, 37, 53];
 
   // ── Header ──────────────────────────────────────────────────────────────
-  const team    = document.getElementById('teamName').value.trim()     || 'Your Team';
-  const opp     = document.getElementById('opponentName').value.trim() || 'Opponent';
-  const dateVal = document.getElementById('gameDate').value;
+  const team      = document.getElementById('teamName').value.trim()     || 'Home Team';
+  const opp       = document.getElementById('opponentName').value.trim() || 'Away Team';
+  const fieldName = document.getElementById('fieldName').value.trim();
+  const dateVal   = document.getElementById('gameDate').value;
   let dateStr = '';
   if (dateVal) {
     const d = new Date(dateVal + 'T12:00:00');
@@ -974,10 +983,18 @@ function doPrintPDF() {
     doc.setFontSize(10);
     doc.setTextColor(...MUTED);
     doc.text(dateStr, PAGE_W / 2, y, { align: 'center' });
-    y += 14;
+    y += 13;
   }
 
-  y += 7;
+  if (fieldName) {
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...MUTED);
+    doc.text(fieldName, PAGE_W / 2, y, { align: 'center' });
+    y += 13;
+  }
+
+  y += 4;
   doc.setDrawColor(...PRIMARY);
   doc.setLineWidth(0.75);
   doc.line(MARGIN, y, PAGE_W - MARGIN, y);
