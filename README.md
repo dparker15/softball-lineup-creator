@@ -17,10 +17,10 @@ A single-file web app for youth softball coaches to instantly generate a batting
 ## How to Use
 
 ### 1. Enter Game Info
-Fill in the game date, your team name, and the opposing team name.
+Fill in the game date, home team name, away team name, and the field name (e.g., *Sandy Plains Field 3*). The field name appears on the printed PDF.
 
 ### 2. Add Your Roster
-**Paste Roster tab (recommended):** Paste your player list directly — one player per line. The following formats are all accepted:
+The **Paste Roster** tab is shown by default. Paste your player list directly — one player per line. The following formats are all accepted:
 
 ```
 Jane Smith, 12
@@ -63,12 +63,12 @@ The generator enforces the following rules automatically. Manual swaps are valid
 
 | Players | Positions |
 |---------|-----------|
-| 11 | Catcher, Pitcher, 1st Base, 2nd Base, 3rd Base, Short Stop, Short Field, Left Field, Left Center Field, Right Center Field, Right Field |
-| 10 | Catcher, Pitcher, 1st Base, 2nd Base, 3rd Base, Short Stop, Short Field, Left Field, Center Field, Right Field |
-| 9 | Catcher, Pitcher, 1st Base, 2nd Base, 3rd Base, Short Stop, Short Field, Left Field, Right Field |
-| 8 | Catcher, Pitcher, 1st Base, 2nd Base, 3rd Base, Short Stop, Short Field, Outfield |
-| 7 | Catcher, Pitcher, 1st Base, 2nd Base, 3rd Base, Short Stop, Short Field |
-| 6 | Catcher, Pitcher, 1st Base, 2nd Base, 3rd Base, Short Stop |
+| 11 | Pitcher, Catcher, 1st Base, 2nd Base, Short Stop, 3rd Base, Short Field, Left Field, Left Center Field, Right Center Field, Right Field |
+| 10 | Pitcher, Catcher, 1st Base, 2nd Base, Short Stop, 3rd Base, Short Field, Left Field, Center Field, Right Field |
+| 9 | Pitcher, Catcher, 1st Base, 2nd Base, Short Stop, 3rd Base, Short Field, Left Field, Right Field |
+| 8 | Pitcher, Catcher, 1st Base, 2nd Base, Short Stop, 3rd Base, Short Field, Outfield |
+| 7 | Pitcher, Catcher, 1st Base, 2nd Base, Short Stop, 3rd Base, Short Field |
+| 6 | Pitcher, Catcher, 1st Base, 2nd Base, Short Stop, 3rd Base |
 
 ---
 
