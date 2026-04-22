@@ -796,7 +796,7 @@ function renderResults() {
   const opp  = document.getElementById('opponentName').value.trim() || 'Away Team';
 
   const fieldName = document.getElementById('fieldName').value.trim();
-  document.getElementById('printTitle').textContent = `${team}  vs  ${opp}`;
+  document.getElementById('printTitle').textContent = `${opp}  at  ${team}`;
   if (dateVal) {
     const d = new Date(dateVal + 'T12:00:00');
     document.getElementById('printDate').textContent = d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
@@ -975,7 +975,7 @@ function doPrintPDF() {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
   doc.setTextColor(...PRIMARY);
-  doc.text(`${team}  vs  ${opp}`, PAGE_W / 2, y, { align: 'center' });
+  doc.text(`${opp}  at  ${team}`, PAGE_W / 2, y, { align: 'center' });
   y += 16;
 
   if (dateStr) {
