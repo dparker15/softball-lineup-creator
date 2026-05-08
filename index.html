@@ -427,11 +427,11 @@
             <tbody id="battingBody"></tbody>
           </table>
           <div class="paste-panel no-print">
-            <h3>Paste batting order</h3>
-            <textarea class="paste-area results-paste-area" id="batPasteArea" placeholder="One row per batter (tab or comma between columns). Optional header row. Example:&#10;#	Player	Jersey&#10;1	Jane Smith	12"></textarea>
-            <p class="paste-format-hint">Columns: optional lineup #, player name, optional jersey. Every roster player must appear once. Names should match your roster; use jersey if two players share a name.</p>
+            <h3>Manual lineup</h3>
+            <textarea class="paste-area results-paste-area" id="batPasteArea" placeholder="One row per batter. Names should match your entered roster; use jersey if two players share a name."></textarea>
+            <p class="paste-format-hint">&nbsp;</p>
             <div class="btn-row" style="margin-top:0.5rem">
-              <button type="button" class="btn btn-primary" style="font-size:0.82rem" onclick="applyBattingPaste()">Apply pasted batting order</button>
+              <button type="button" class="btn btn-primary" style="font-size:0.82rem" onclick="applyBattingPaste()">Apply changes</button>
               <button type="button" class="btn btn-outline" style="font-size:0.82rem" onclick="clearBattingPaste()">Clear</button>
             </div>
             <div class="paste-msg" id="batPasteMsg" role="status"></div>
@@ -459,11 +459,11 @@
             </table>
           </div>
           <div class="paste-panel no-print">
-            <h3>Paste fielding grid</h3>
-            <textarea class="paste-area results-paste-area" id="fieldPasteArea" placeholder="Same layout as the table: one row per position. Either 5 columns (Inn 1–5 only, rows in table order) or 6 columns (Position + 5 innings). Optional header row."></textarea>
-            <p class="paste-format-hint">Paste from a sheet with player names in each cell (tabs from Excel). Position column must match labels like <code>Pitcher</code>, <code>1st Base</code>, … if used.</p>
+            <h3>Manual fielding grid</h3>
+            <textarea class="paste-area results-paste-area" id="fieldPasteArea" placeholder="5 innings, one row per position. Player names must match your entered roster. Paste from spreadsheet or use comma/tab separated lists."></textarea>
+            <p class="paste-format-hint">&nbsp;</p>
             <div class="btn-row" style="margin-top:0.5rem">
-              <button type="button" class="btn btn-primary" style="font-size:0.82rem" onclick="applyFieldingPaste()">Apply pasted fielding grid</button>
+              <button type="button" class="btn btn-primary" style="font-size:0.82rem" onclick="applyFieldingPaste()">Apply changes</button>
               <button type="button" class="btn btn-outline" style="font-size:0.82rem" onclick="clearFieldingPaste()">Clear</button>
             </div>
             <div class="paste-msg" id="fieldPasteMsg" role="status"></div>
