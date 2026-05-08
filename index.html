@@ -249,12 +249,34 @@
       font-size: 0.75rem;
     }
 
+    .paste-panel {
+      margin-top: 0.85rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border);
+    }
+    .paste-panel h3 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.45rem;
+    }
+    .results-paste-area { min-height: 88px; }
+    .paste-msg {
+      font-size: 0.78rem;
+      color: #dc2626;
+      margin-top: 0.45rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+    .paste-msg.ok { color: #15803d; }
+
     /* ── Print styles ── */
     @media print {
       @page { size: letter portrait; margin: 0.45in; }
 
       body { background: white; }
       header, .no-print { display: none !important; }
+      .paste-panel, .results-paste-area, .paste-msg { display: none !important; }
       main { padding: 0; max-width: none; }
 
       .print-header {
@@ -404,6 +426,16 @@
             </thead>
             <tbody id="battingBody"></tbody>
           </table>
+          <div class="paste-panel no-print">
+            <h3>Paste batting order</h3>
+            <textarea class="paste-area results-paste-area" id="batPasteArea" placeholder="One row per batter (tab or comma between columns). Optional header row. Example:&#10;#	Player	Jersey&#10;1	Jane Smith	12"></textarea>
+            <p class="paste-format-hint">Columns: optional lineup #, player name, optional jersey. Every roster player must appear once. Names should match your roster; use jersey if two players share a name.</p>
+            <div class="btn-row" style="margin-top:0.5rem">
+              <button type="button" class="btn btn-primary" style="font-size:0.82rem" onclick="applyBattingPaste()">Apply pasted batting order</button>
+              <button type="button" class="btn btn-outline" style="font-size:0.82rem" onclick="clearBattingPaste()">Clear</button>
+            </div>
+            <div class="paste-msg" id="batPasteMsg" role="status"></div>
+          </div>
         </div>
       </div>
 
@@ -425,6 +457,16 @@
               <thead id="fieldingHead"></thead>
               <tbody id="fieldingBody"></tbody>
             </table>
+          </div>
+          <div class="paste-panel no-print">
+            <h3>Paste fielding grid</h3>
+            <textarea class="paste-area results-paste-area" id="fieldPasteArea" placeholder="Same layout as the table: one row per position. Either 5 columns (Inn 1–5 only, rows in table order) or 6 columns (Position + 5 innings). Optional header row."></textarea>
+            <p class="paste-format-hint">Paste from a sheet with player names in each cell (tabs from Excel). Position column must match labels like <code>Pitcher</code>, <code>1st Base</code>, … if used.</p>
+            <div class="btn-row" style="margin-top:0.5rem">
+              <button type="button" class="btn btn-primary" style="font-size:0.82rem" onclick="applyFieldingPaste()">Apply pasted fielding grid</button>
+              <button type="button" class="btn btn-outline" style="font-size:0.82rem" onclick="clearFieldingPaste()">Clear</button>
+            </div>
+            <div class="paste-msg" id="fieldPasteMsg" role="status"></div>
           </div>
         </div>
       </div>
@@ -782,6 +824,8 @@ function resetPage() {
   document.getElementById('opponentName').value = '';
   document.getElementById('fieldName').value = '';
   document.getElementById('playersList').innerHTML = '';
+  clearBattingPaste();
+  clearFieldingPaste();
   for (let i = 0; i < 11; i++) addPlayerRow();
   updateCountBadge();
   document.getElementById('results').style.display = 'none';
@@ -932,6 +976,259 @@ function setFieldingHighlight(inn, pos, on) {
 
 function clearHighlights() {
   document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+}
+
+// ── Paste from spreadsheet (batting + fielding) ───────────────────────────────
+
+function normName(s) {
+  return String(s).trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function splitLineToCells(line) {
+  if (line.includes('\t')) return line.split('\t').map(c => c.trim());
+  if (line.includes(',')) return line.split(',').map(c => c.trim());
+  return [line.trim()];
+}
+
+function isJerseyToken(s) {
+  const t = String(s).trim();
+  return /^#?\d{1,3}$/.test(t) || t === '?' || t === '';
+}
+
+function looksLikeBattingHeader(cells) {
+  const t = cells.map(c => String(c).toLowerCase()).join('|');
+  if (cells.length > 4) return false;
+  return /player|name|jersey|bat|^#?$/.test(t);
+}
+
+function looksLikeFieldHeader(cells) {
+  const t = cells.map(c => String(c).toLowerCase()).join(' ');
+  if (/^position\b/.test(cells[0] ? String(cells[0]).toLowerCase() : '')) return true;
+  return /\bposition\b/.test(t) && /\binning\b/.test(t);
+}
+
+function parseBattingPasteRow(cells) {
+  const parts = cells.map(c => String(c).trim()).filter(c => c !== '');
+  if (!parts.length) return null;
+  if (parts.length === 1) return { name: parts[0], jersey: null };
+  if (parts.length === 2) {
+    const [a, b] = parts;
+    if (/^\d+$/.test(a) && !isJerseyToken(b)) return { name: b, jersey: null };
+    if (isJerseyToken(b) && b !== '') return { name: a, jersey: b.replace(/^#/, '') };
+    return { name: `${a} ${b}`, jersey: null };
+  }
+  const [a, b, c] = parts;
+  if (/^\d+$/.test(a)) {
+    const jersey = c && isJerseyToken(c) && c !== '' ? c.replace(/^#/, '') : null;
+    return { name: b, jersey };
+  }
+  const jersey = isJerseyToken(b) && b !== '' ? b.replace(/^#/, '') : null;
+  return { name: a, jersey };
+}
+
+function findPlayerIndex(nameRaw, jerseyOpt) {
+  const name = normName(nameRaw);
+  if (!name) return -1;
+  const candidates = [];
+  for (let i = 0; i < players.length; i++) {
+    if (normName(players[i].name) === name) candidates.push(i);
+  }
+  if (!candidates.length) return -1;
+  if (candidates.length === 1) return candidates[0];
+  if (jerseyOpt != null && String(jerseyOpt).trim() !== '') {
+    const j = String(jerseyOpt).trim();
+    for (const idx of candidates) {
+      const pj = String(players[idx].number).trim();
+      if (pj === j || (pj === '?' && j === '?')) return idx;
+    }
+  }
+  return -2;
+}
+
+function setPasteMsg(elId, text, ok) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.textContent = text || '';
+  el.classList.toggle('ok', !!ok);
+}
+
+function applyBattingPaste() {
+  setPasteMsg('batPasteMsg', '', false);
+  const raw = document.getElementById('batPasteArea').value;
+  const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (!lines.length) {
+    setPasteMsg('batPasteMsg', 'Paste a batting order first.');
+    return;
+  }
+
+  let rows = lines.map(splitLineToCells);
+  if (rows.length && looksLikeBattingHeader(rows[0])) rows = rows.slice(1);
+
+  const N = players.length;
+  const order = [];
+  const errs = [];
+  const used = new Set();
+
+  rows.forEach((cells, i) => {
+    const pr = parseBattingPasteRow(cells);
+    if (!pr || !pr.name) {
+      errs.push(`Line ${i + 1}: could not read a player name.`);
+      return;
+    }
+    const idx = findPlayerIndex(pr.name, pr.jersey);
+    if (idx === -1) errs.push(`Line ${i + 1}: no match for "${pr.name}".`);
+    else if (idx === -2) errs.push(`Line ${i + 1}: multiple "${pr.name}" — add a Jersey column.`);
+    else {
+      if (used.has(idx)) errs.push(`Line ${i + 1}: ${players[idx].name} appears more than once in the paste.`);
+      used.add(idx);
+      order.push(idx);
+    }
+  });
+
+  if (errs.length) {
+    setPasteMsg('batPasteMsg', errs.join('\n'));
+    return;
+  }
+  if (order.length !== N) {
+    setPasteMsg('batPasteMsg', `Need exactly ${N} players (your roster size); pasted ${order.length}.`);
+    return;
+  }
+
+  battingOrder = order;
+  selectedCell = null;
+  renderBattingTable();
+  showErrors();
+  document.getElementById('batPasteArea').value = '';
+  setPasteMsg('batPasteMsg', 'Batting order updated.', true);
+}
+
+function clearBattingPaste() {
+  document.getElementById('batPasteArea').value = '';
+  setPasteMsg('batPasteMsg', '', false);
+}
+
+function applyFieldingPaste() {
+  setPasteMsg('fieldPasteMsg', '', false);
+  const raw = document.getElementById('fieldPasteArea').value;
+  const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (!lines.length) {
+    setPasteMsg('fieldPasteMsg', 'Paste fielding data first.');
+    return;
+  }
+
+  let rows = lines.map(splitLineToCells);
+  if (rows.length && looksLikeFieldHeader(rows[0])) rows = rows.slice(1);
+
+  const N = players.length;
+  if (rows.length !== N) {
+    setPasteMsg('fieldPasteMsg', `Expected ${N} rows (one per fielding position), got ${rows.length}.`);
+    return;
+  }
+
+  const c0 = rows[0].length;
+  const colMode = c0 >= 6 ? 6 : 5;
+  if (colMode !== 5 && colMode !== 6) {
+    setPasteMsg('fieldPasteMsg', 'Each row needs 5 inning columns, or 6 columns with Position + 5 innings.');
+    return;
+  }
+  for (let r = 0; r < rows.length; r++) {
+    const L = rows[r].length;
+    if (colMode === 6 && L < 6) {
+      setPasteMsg('fieldPasteMsg', `Row ${r + 1}: expected Position + 5 innings (${L} columns found).`);
+      return;
+    }
+    if (colMode === 5 && L !== 5) {
+      setPasteMsg('fieldPasteMsg', `Row ${r + 1}: expected 5 inning columns (${L} columns found).`);
+      return;
+    }
+  }
+
+  const newGrid = [];
+  for (let inn = 0; inn < 5; inn++) newGrid.push(Array(N).fill(-1));
+
+  const seenPos = new Set();
+  const errs = [];
+
+  rows.forEach((cells, r) => {
+    let posIdx = r;
+    let nameCols;
+    if (colMode === 6) {
+      const posLabel = cells[0].trim();
+      const pi = positions.findIndex(p => normName(p) === normName(posLabel));
+      if (pi < 0) {
+        errs.push(`Row ${r + 1} (${posLabel}): unknown position label.`);
+        return;
+      }
+      if (seenPos.has(pi)) {
+        errs.push(`Duplicate row for "${positions[pi]}".`);
+        return;
+      }
+      seenPos.add(pi);
+      posIdx = pi;
+      nameCols = cells.slice(1, 6);
+    } else {
+      nameCols = cells.slice(0, 5);
+    }
+
+    for (let inn = 0; inn < 5; inn++) {
+      const rawName = (nameCols[inn] || '').trim();
+      if (!rawName) {
+        errs.push(`Row ${r + 1} Inning ${inn + 1}: empty cell.`);
+        continue;
+      }
+      const idx = findPlayerIndex(rawName, null);
+      if (idx === -1) errs.push(`Row ${r + 1} Inning ${inn + 1}: unknown player "${rawName}".`);
+      else if (idx === -2) errs.push(`Row ${r + 1} Inning ${inn + 1}: ambiguous "${rawName}" — use full name as in roster.`);
+      else newGrid[inn][posIdx] = idx;
+    }
+  });
+
+  if (colMode === 6 && seenPos.size !== N) {
+    setPasteMsg('fieldPasteMsg', 'Each position must appear exactly once in the first column.');
+    return;
+  }
+
+  if (errs.length) {
+    const show = errs.slice(0, 12);
+    setPasteMsg('fieldPasteMsg', show.join('\n') + (errs.length > 12 ? `\n… and ${errs.length - 12} more.` : ''));
+    return;
+  }
+
+  for (let inn = 0; inn < 5; inn++) {
+    const seen = new Set();
+    for (let j = 0; j < N; j++) {
+      const p = newGrid[inn][j];
+      if (p < 0) {
+        setPasteMsg('fieldPasteMsg', `Inning ${inn + 1}: incomplete paste (missing assignment).`);
+        return;
+      }
+      if (seen.has(p)) {
+        setPasteMsg('fieldPasteMsg', `Inning ${inn + 1}: ${players[p].name} appears more than once in paste.`);
+        return;
+      }
+      seen.add(p);
+    }
+    if (seen.size !== N) {
+      setPasteMsg('fieldPasteMsg', `Inning ${inn + 1}: not every player is assigned exactly once.`);
+      return;
+    }
+  }
+
+  fieldingGrid = newGrid;
+  selectedCell = null;
+  renderResults();
+  document.getElementById('fieldPasteArea').value = '';
+  const v = validateRules();
+  setPasteMsg(
+    'fieldPasteMsg',
+    v.length ? `Grid applied; fix ${v.length} rule issue(s) above before printing.` : 'Fielding grid updated.',
+    !v.length
+  );
+}
+
+function clearFieldingPaste() {
+  document.getElementById('fieldPasteArea').value = '';
+  setPasteMsg('fieldPasteMsg', '', false);
 }
 
 // ── Print ────────────────────────────────────────────────────────────────────
