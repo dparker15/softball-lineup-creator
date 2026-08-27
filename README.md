@@ -1,4 +1,4 @@
-# Sandy Plains Softball Lineup Generator
+# Sandy Plains 8U Softball Lineup Generator
 
 A single-file web app for youth softball coaches to instantly generate a batting lineup and 5-inning fielding rotation for their team.
 
