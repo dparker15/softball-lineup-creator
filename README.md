@@ -31,7 +31,7 @@ Maria Garcia #23
 
 Jersey numbers are optional. After clicking **Import Players**, the roster populates the individual rows for review.
 
-**One by One tab:** Enter each player name and jersey number individually. Use **+ Add Player** to add rows (6–11 players supported).
+**One by One tab:** Enter each player name and jersey number individually. Use **+ Add Player** to add rows (6–12 players supported). At 12 players, a Bench position is added to the fielding rotation.
 
 ### 3. Generate the Lineup
 Click **Generate Lineup** to randomly produce:
@@ -63,6 +63,7 @@ The generator enforces the following rules automatically. Manual swaps are valid
 
 | Players | Positions |
 |---------|-----------|
+| 12 | Pitcher, Catcher, 1st Base, 2nd Base, Short Stop, 3rd Base, Short Field, Left Field, Left Center Field, Right Center Field, Right Field, Bench |
 | 11 | Pitcher, Catcher, 1st Base, 2nd Base, Short Stop, 3rd Base, Short Field, Left Field, Left Center Field, Right Center Field, Right Field |
 | 10 | Pitcher, Catcher, 1st Base, 2nd Base, Short Stop, 3rd Base, Short Field, Left Field, Center Field, Right Field |
 | 9 | Pitcher, Catcher, 1st Base, 2nd Base, Short Stop, 3rd Base, Short Field, Left Field, Right Field |
