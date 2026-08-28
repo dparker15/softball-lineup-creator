@@ -194,31 +194,6 @@
       font-weight: 700;
     }
 
-    /* ── Tabs ── */
-    .tab-bar {
-      display: flex;
-      gap: 0;
-      border-bottom: 2px solid var(--border);
-      margin-bottom: 1rem;
-    }
-    .tab-btn {
-      padding: 0.45rem 1rem;
-      font-size: 0.82rem;
-      font-weight: 600;
-      font-family: inherit;
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -2px;
-      cursor: pointer;
-      color: var(--text-light);
-      transition: color 0.15s, border-color 0.15s;
-    }
-    .tab-btn:hover { color: var(--primary-light); }
-    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
     /* Paste textarea */
     .paste-area {
       width: 100%;
@@ -321,30 +296,31 @@
 
 <main>
 
-  <!-- ── Input Section ── -->
-  <div id="inputSection">
-
-    <div class="card no-print">
-      <h2>Game Info</h2>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="gameDate">Game Date</label>
-          <input type="date" id="gameDate">
-        </div>
-        <div class="form-group">
-          <label for="teamName">Home Team</label>
-          <input type="text" id="teamName" placeholder="e.g., 802 - Fire Ants">
-        </div>
-        <div class="form-group">
-          <label for="opponentName">Away Team</label>
-          <input type="text" id="opponentName" placeholder="e.g., 804 - Pink Ponies">
-        </div>
-        <div class="form-group">
-          <label for="fieldName">Field</label>
-          <input type="text" id="fieldName" placeholder="e.g., Sandy Plains Field 3">
-        </div>
+  <!-- ── Game Info — persists across both the input and results screens ── -->
+  <div class="card no-print">
+    <h2>Game Info</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="gameDate">Game Date</label>
+        <input type="date" id="gameDate" oninput="updateGameInfoDisplay()">
+      </div>
+      <div class="form-group">
+        <label for="teamName">Home Team</label>
+        <input type="text" id="teamName" placeholder="e.g., 802 - Fire Ants" oninput="updateGameInfoDisplay()">
+      </div>
+      <div class="form-group">
+        <label for="opponentName">Away Team</label>
+        <input type="text" id="opponentName" placeholder="e.g., 804 - Pink Ponies" oninput="updateGameInfoDisplay()">
+      </div>
+      <div class="form-group">
+        <label for="fieldName">Field</label>
+        <input type="text" id="fieldName" placeholder="e.g., Sandy Plains Field 3" oninput="updateGameInfoDisplay()">
       </div>
     </div>
+  </div>
+
+  <!-- ── Input Section ── -->
+  <div id="inputSection">
 
     <div class="card no-print">
       <h2>
@@ -353,36 +329,16 @@
         <span style="font-size:0.75rem;font-weight:400;color:var(--text-light);margin-left:4px">(6–12)</span>
       </h2>
 
-      <!-- Tab bar -->
-      <div class="tab-bar">
-        <button class="tab-btn active" id="tabBtnPaste" onclick="switchTab('paste')">Paste Roster</button>
-        <button class="tab-btn" id="tabBtnOne" onclick="switchTab('one')">One by One</button>
+      <div style="display:grid;grid-template-columns:1fr 80px 32px;gap:0.5rem;margin-bottom:0.4rem;padding:0 0 0 28px">
+        <span style="font-size:0.75rem;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px">Name</span>
+        <span style="font-size:0.75rem;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px">Jersey #</span>
+        <span></span>
       </div>
-
-      <!-- Tab: individual rows -->
-      <div class="tab-panel" id="tabPanelOne">
-        <div style="display:grid;grid-template-columns:1fr 80px 32px;gap:0.5rem;margin-bottom:0.4rem;padding:0 0 0 28px">
-          <span style="font-size:0.75rem;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px">Name</span>
-          <span style="font-size:0.75rem;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px">Jersey #</span>
-          <span></span>
-        </div>
-        <div class="players-list" id="playersList"></div>
-        <div class="btn-row" style="margin-top:0.75rem">
-          <button class="btn btn-outline" style="font-size:0.82rem;padding:0.35rem 0.85rem" onclick="addPlayerRow()">+ Add Player</button>
-        </div>
-      </div>
-
-      <!-- Tab: paste roster -->
-      <div class="tab-panel active" id="tabPanelPaste">
-        <textarea class="paste-area" id="pasteArea" placeholder="Paste your roster here, one player per line…"></textarea>
-        <p class="paste-format-hint">
-          Each line = one player. Jersey number is optional. Accepted formats:<br>
-          <code>Jane Smith, 12</code> &nbsp;·&nbsp; <code>Jane Smith 12</code> &nbsp;·&nbsp; <code>Jane Smith #12</code> &nbsp;·&nbsp; <code>12 Jane Smith</code>
-        </p>
-        <div class="btn-row" style="margin-top:0.75rem">
-          <button class="btn btn-primary" style="font-size:0.82rem" onclick="importFromPaste()">Import Players</button>
-          <button class="btn btn-ghost" style="color:var(--text-light);border:1.5px solid var(--border);border-radius:7px;padding:0.3rem 0.75rem;font-size:0.82rem" onclick="clearPaste()">Clear</button>
-        </div>
+      <div class="players-list" id="playersList"></div>
+      <div class="btn-row" style="margin-top:0.75rem">
+        <button class="btn btn-outline" style="font-size:0.82rem;padding:0.35rem 0.85rem" onclick="addPlayerRow()">+ Add Player</button>
+        <button class="btn btn-outline" style="font-size:0.82rem;padding:0.35rem 0.85rem" onclick="saveRoster()">💾 Save Roster</button>
+        <button class="btn btn-outline" style="font-size:0.82rem;padding:0.35rem 0.85rem;display:none" id="loadRosterBtn" onclick="loadRoster()">📂 Load Saved Roster</button>
       </div>
     </div>
 
@@ -518,6 +474,8 @@ window.addEventListener('load', () => {
   for (let i = 0; i < 12; i++) addPlayerRow();
   updateCountBadge();
   setDefaultGameDate();
+  updateGameInfoDisplay();
+  document.getElementById('loadRosterBtn').style.display = localStorage.getItem(ROSTER_STORAGE_KEY) ? 'inline-flex' : 'none';
 });
 
 function setDefaultGameDate() {
@@ -586,59 +544,31 @@ function getPlayersFromForm() {
   return result;
 }
 
-// ── Tab Switching ──────────────────────────────────────────────────────────
+// ── Roster Save / Load (localStorage) ─────────────────────────────────────
 
-function switchTab(tab) {
-  document.getElementById('tabBtnOne').classList.toggle('active', tab === 'one');
-  document.getElementById('tabBtnPaste').classList.toggle('active', tab === 'paste');
-  document.getElementById('tabPanelOne').classList.toggle('active', tab === 'one');
-  document.getElementById('tabPanelPaste').classList.toggle('active', tab === 'paste');
-}
+const ROSTER_STORAGE_KEY = 'sandyPlains8uSavedRoster';
 
-// ── Paste Import ───────────────────────────────────────────────────────────
-
-function parsePasteLine(line) {
-  line = line.trim();
-  if (!line) return null;
-
-  // "Name, #Number" or "Name, Number"
-  let m = line.match(/^(.+?),\s*#?(\w+)\s*$/);
-  if (m) return { name: m[1].trim(), number: m[2] };
-
-  // "#Number Name" or "Number Name" (number first)
-  m = line.match(/^#?(\d+)\s+(.+)$/);
-  if (m) return { name: m[2].trim(), number: m[1] };
-
-  // "Name #Number" or "Name Number" (number last, preceded by space)
-  m = line.match(/^(.+?)\s+#?(\d+)\s*$/);
-  if (m) return { name: m[1].trim(), number: m[2] };
-
-  // Just a name, no number
-  return { name: line, number: '?' };
-}
-
-function importFromPaste() {
-  const raw = document.getElementById('pasteArea').value;
-  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
-
-  if (!lines.length) {
-    alert('Nothing to import — paste your roster first.');
+function saveRoster() {
+  const roster = getPlayersFromForm();
+  if (!roster.length) {
+    alert('Add at least one player before saving.');
     return;
   }
+  localStorage.setItem(ROSTER_STORAGE_KEY, JSON.stringify(roster));
+  document.getElementById('loadRosterBtn').style.display = 'inline-flex';
+  alert(`Roster saved (${roster.length} player${roster.length === 1 ? '' : 's'}).`);
+}
 
-  const parsed = lines.map(parsePasteLine).filter(Boolean).slice(0, 12);
+function loadRoster() {
+  const raw = localStorage.getItem(ROSTER_STORAGE_KEY);
+  if (!raw) return;
+  let roster;
+  try { roster = JSON.parse(raw); } catch (e) { return; }
+  if (!Array.isArray(roster) || !roster.length) return;
 
-  if (parsed.length < 1) {
-    alert('Could not find any player names. Check your formatting and try again.');
-    return;
-  }
-
-  // Clear and repopulate the individual rows
   const list = document.getElementById('playersList');
   list.innerHTML = '';
-  // Ensure we have the right number of empty rows first (addPlayerRow enforces cap)
-  parsed.forEach(p => {
-    // Directly create rows since addPlayerRow checks max
+  roster.slice(0, 12).forEach(p => {
     const row = document.createElement('div');
     row.className = 'player-row';
     row.innerHTML = `
@@ -651,13 +581,6 @@ function importFromPaste() {
   });
   renumberRows();
   updateCountBadge();
-
-  // Switch to the "One by One" tab so the coach can review/edit
-  switchTab('one');
-}
-
-function clearPaste() {
-  document.getElementById('pasteArea').value = '';
 }
 
 // ── Utilities ──────────────────────────────────────────────────────────────
@@ -848,18 +771,23 @@ function resetPage() {
   for (let i = 0; i < 12; i++) addPlayerRow();
   updateCountBadge();
   setDefaultGameDate();
+  updateGameInfoDisplay();
+  document.getElementById('loadRosterBtn').style.display = localStorage.getItem(ROSTER_STORAGE_KEY) ? 'inline-flex' : 'none';
   document.getElementById('results').style.display = 'none';
   document.getElementById('inputSection').style.display = 'block';
 }
 
 // ── Render ──────────────────────────────────────────────────────────────────
 
-function renderResults() {
+// Refreshes the print-header text (title/date/field) from the persistent
+// Game Info card. Called on every edit to those fields so the coach can fix
+// a date, team name, or field on the results screen without regenerating.
+function updateGameInfoDisplay() {
   const dateVal = document.getElementById('gameDate').value;
   const team = document.getElementById('teamName').value.trim() || 'Home Team';
   const opp  = document.getElementById('opponentName').value.trim() || 'Away Team';
-
   const fieldName = document.getElementById('fieldName').value.trim();
+
   document.getElementById('printTitle').textContent = `${opp}  at  ${team}`;
   if (dateVal) {
     const d = new Date(dateVal + 'T12:00:00');
@@ -868,6 +796,10 @@ function renderResults() {
     document.getElementById('printDate').textContent = '';
   }
   document.getElementById('printField').textContent = fieldName;
+}
+
+function renderResults() {
+  updateGameInfoDisplay();
 
   renderBattingTable();
   renderFieldingGrid();
